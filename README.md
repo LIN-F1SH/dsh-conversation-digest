@@ -2,6 +2,12 @@
 
 [![ci](https://github.com/LIN-F1SH/dsh-conversation-digest/actions/workflows/ci.yml/badge.svg)](https://github.com/LIN-F1SH/dsh-conversation-digest/actions/workflows/ci.yml)
 
+## 预览
+
+![预览示意图](docs/preview.png)
+
+*示意图，非实拍：实际界面跟随宿主主题，按钮位于输入框右侧。*
+
 > 把「每次都要自己想起来」变成「存在档案里、下次自动补上」。
 
 DeepSeek Harness（DSH）插件：读你的历史对话，指出你提问上的问题，并在你下次发言前把这些毛病补上。
