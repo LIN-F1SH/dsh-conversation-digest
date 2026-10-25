@@ -279,6 +279,32 @@ ok('优化提示词里带上改进项 id 与改写建议', () => {
   assert.match(prompt, /帮我看看这个报告/)
 })
 
+ok('材料瘦身：失败按工具+错误码聚合，不再逐条贴', () => {
+  const failures = Array.from({ length: 20 }, (_, i) => ({
+    seq: i, tool: i % 2 ? 'pwsh' : 'edit', code: i % 2 ? 'FS_NOT_FOUND' : 'FS_AMBIGUOUS_EDIT', reason: 'x'.repeat(400),
+  }))
+  const digest = digestSession(
+    { sessionId: 's1' },
+    { title: 't', turns: 3, userMessages: [{ seq: 1, text: '你好' }], toolFailures: failures },
+  )
+  assert.match(digest, /pwsh ×10/)
+  assert.match(digest, /edit ×10/)
+  // 20 条 400 字的原因如果逐条贴，光失败就要 8000 字符以上
+  assert.ok(digest.length < 1200, '材料仍太长：' + digest.length)
+})
+
+ok('材料瘦身：连续重复提问折叠成 ×N', () => {
+  const msgs = [
+    { seq: 1, text: '帮我打开这个软件' },
+    { seq: 2, text: '帮我打开这个软件' },
+    { seq: 3, text: '帮我打开这个软件' },
+    { seq: 4, text: '换个说法' },
+  ]
+  const digest = digestSession({ sessionId: 's' }, { title: 't', turns: 1, userMessages: msgs, toolFailures: [] })
+  assert.equal(digest.split('帮我打开这个软件').length - 1, 1, '同一句只该出现一次')
+  assert.match(digest, /同一句重复 3 次/)
+})
+
 ok('复盘提示词聚合多个会话', () => {
   const prompt = buildReviewPrompt([
     { session: { sessionId: 's1' }, signals: { title: 'A', turns: 1, userMessages: [{ seq: 1, text: '你好' }], toolFailures: [] } },

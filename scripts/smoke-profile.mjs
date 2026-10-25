@@ -13,7 +13,7 @@ process.env.DSH_HOME = tmpHome
 
 const {
   emptyProfile, loadProfile, saveProfile, mergeIssues, upsertAsset, normalizeTitle,
-  issueKey, similarity, recommend, activeIssues, recordReview, normalizeSettings, suggestTitle,
+  issueKey, similarity, recommend, activeIssues, recordReview, normalizeSettings, suggestTitle, pendingSessions,
   PROFILE_FILE, PROFILE_DIR,
 } = await import('../lib/profile.mjs')
 
@@ -229,6 +229,30 @@ ok('设置校验：缺字段时保留默认值', () => {
   const s = normalizeSettings({})
   assert.equal(s.enabled, true)
   assert.equal(s.optimizeDefault, '标准')
+})
+
+ok('增量复盘：已看过且没变的会话被跳过', () => {
+  const sessions = [
+    { sessionId: 'a', mtime: 100 },
+    { sessionId: 'b', mtime: 200 },
+    { sessionId: 'c', mtime: 300 },
+  ]
+  // a 看过且没变；b 看过但之后变过；c 没看过
+  const pending = pendingSessions(sessions, { a: 100, b: 150 })
+  assert.deepEqual(pending.map((s) => s.sessionId), ['b', 'c'])
+})
+
+ok('增量复盘：force 时全部重跑', () => {
+  const sessions = [{ sessionId: 'a', mtime: 100 }]
+  assert.deepEqual(pendingSessions(sessions, { a: 100 }, { force: true }).map((s) => s.sessionId), ['a'])
+})
+
+ok('coverage 能存进档案并读回', () => {
+  const p = emptyProfile()
+  p.coverage = { 'session-a': 123 }
+  saveProfile(p)
+  const { profile } = loadProfile()
+  assert.equal(profile.coverage['session-a'], 123)
 })
 
 ok('复盘记录写入并裁剪', () => {
