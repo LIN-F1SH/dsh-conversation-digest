@@ -13,10 +13,12 @@
     "node": ">=20"
   },
   "scripts": {
-    "smoke": "node scripts/smoke.mjs && node scripts/smoke-profile.mjs && node scripts/smoke-analyze.mjs",
+    "smoke": "node scripts/smoke.mjs && node scripts/smoke-profile.mjs && node scripts/smoke-analyze.mjs && node scripts/smoke-client.mjs",
     "smoke:host": "node scripts/smoke.mjs",
     "smoke:profile": "node scripts/smoke-profile.mjs",
-    "smoke:analyze": "node scripts/smoke-analyze.mjs"
+    "smoke:analyze": "node scripts/smoke-analyze.mjs",
+    "smoke:client": "node scripts/smoke-client.mjs",
+    "verify:live": "node scripts/verify-live.mjs"
   },
   "keywords": [
     "dsh",

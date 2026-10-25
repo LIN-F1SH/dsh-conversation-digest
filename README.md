@@ -105,8 +105,10 @@ dsh-conversation-digest/
 ## 开发
 
 ```powershell
-npm run smoke          # 52 项：宿主 14 + 档案 17 + 分析 21
+npm run smoke          # 62 项：宿主 14 + 档案 17 + 分析 21 + 客户端 10
 ```
+
+客户端半区不需要浏览器也能验：`scripts/smoke-client.mjs` 桩掉 `window.__ModuleLoader__`、`document` 和 `require('react')`，直接跑 factory 与 `apply()`，断言 id 与包名一致、返回 cordis 插件、三个插槽名真实存在、组件可渲染、清理函数可用。
 
 重启宿主后，一条命令验证真机闭环：
 
