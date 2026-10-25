@@ -87,6 +87,7 @@ dsh plugin --profile web add github:LIN-F1SH/dsh-conversation-digest#v0.1.0
 | 档案位置 | `$DSH_HOME/prompt-workbench/profile.json`（默认 `~/.dsh`） |
 | 读取什么 | 本机 `~/.dsh/sessions/**/session.v4.jsonl.zstd`，**只读** |
 | 过滤规则 | 只取 `user/message` 且 `source.kind === 'user'` —— 系统注入的运行时上下文、审批通知、技能目录**一律排除**，否则分析结论全是噪声 |
+| 运行要求 | Node **≥ 22.15**（会话日志是 zstd 压缩的，老版本 Node 没有 zstd API） |
 | 联网 | 只有调模型时；读会话与分析不访问任何第三方接口 |
 | 凭据 | **不存任何 key**。模型调用走宿主 `llm` 服务，用你当前选择的默认模型 |
 | 诊断文件 | 模型输出解析失败时，原文会落到 `$DSH_HOME/prompt-workbench/last-*.txt`，仅本机 |

@@ -10,7 +10,7 @@
     "./client": "./client/client.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22.15"
   },
   "scripts": {
     "smoke": "node scripts/smoke.mjs && node scripts/smoke-profile.mjs && node scripts/smoke-analyze.mjs && node scripts/smoke-sessions.mjs && node scripts/smoke-client.mjs",
