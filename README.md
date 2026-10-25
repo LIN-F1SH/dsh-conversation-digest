@@ -46,6 +46,8 @@ dsh plugin --profile web add github:LIN-F1SH/dsh-conversation-digest
 ```
 
 > ⚠️ **宿主代码改动后必须重启应用**。插件以 `link:` 安装时，改 `lib/*` 不会热重载（ESM 模块缓存）；禁用再启用也只会重跑 `apply()`，不会重载代码。客户端 `client/client.js` 的改动刷新页面（Ctrl+F5）即可。
+>
+> ⚠️ **不要在 `link:` 安装之上再试 `file:` 安装。** `link:` 在 `node_modules/<包名>` 建的是指向源码目录的 junction；pnpm 装 `file:` 时会先"移除旧包目录"，它会顺着 junction 把**你源码目录里的文件**删掉（实测把 `.git` 元数据掏空了）。要换安装方式请先卸载并手工删掉那个 junction。
 
 ## 怎么用
 
@@ -105,6 +107,15 @@ dsh-conversation-digest/
 ```powershell
 npm run smoke          # 52 项：宿主 14 + 档案 17 + 分析 21
 ```
+
+重启宿主后，一条命令验证真机闭环：
+
+```powershell
+node scripts/verify-live.mjs          # 默认 http://127.0.0.1:19387
+node scripts/verify-live.mjs 3080     # 或指定 dsh web 的端口
+```
+
+它会依次打印环境体检、跑一次真实复盘、列出改进项与改写草稿、试跑一次优化、复核档案。
 
 ### 三个踩过的坑（写这类插件的人会再踩一遍）
 
