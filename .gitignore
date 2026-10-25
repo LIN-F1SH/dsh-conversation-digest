@@ -1,0 +1,26 @@
+# 依赖
+node_modules/
+.pnpm-store/
+
+# 构建产物
+dist/
+build/
+*.tsbuildinfo
+
+# 日志与临时文件
+*.log
+npm-debug.log*
+pnpm-debug.log*
+*.tmp
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# 本地私有配置（绝不要提交凭据）
+.env
+.env.*
+!.env.example
+*.local

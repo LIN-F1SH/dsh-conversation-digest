@@ -1,0 +1,15 @@
+# ============================================================================
+# dsh-conversation-digest —— DSH bundle patch
+# ============================================================================
+# 这是插件的「挂载声明」。宿主启动时按 bundle 层栈叠加各插件的 patch，
+# 这份文件把本插件插入当前 profile 的配置树。
+#
+# package.json 里 `dsh.bundle.patch` 指向本文件，所以安装时不需要手工改 profile。
+#
+#   id   —— 挂载条目的唯一标识（同 profile 内不可重复）
+#   name —— 插件包名，必须与 package.json 的 name 一致
+# ============================================================================
+
+- insert:
+    - id: dsh-conversation-digest
+      name: dsh-conversation-digest

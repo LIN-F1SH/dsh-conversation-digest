@@ -1,0 +1,45 @@
+{
+  "name": "dsh-conversation-digest",
+  "version": "0.0.1",
+  "description": "DSH 对话总结插件（骨架阶段）：打包、挂载、服务注入、自检链路已经打通，摘要与优化逻辑待实现。",
+  "type": "module",
+  "main": "lib/index.js",
+  "icon": "./icon.png",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "conversation",
+    "summary",
+    "digest"
+  ],
+  "author": "LIN-F1SH",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LIN-F1SH/dsh-conversation-digest.git"
+  },
+  "bugs": {
+    "url": "https://github.com/LIN-F1SH/dsh-conversation-digest/issues"
+  },
+  "homepage": "https://github.com/LIN-F1SH/dsh-conversation-digest#readme",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "files": [
+    "lib",
+    "scripts",
+    "icon.png",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ]
+}
