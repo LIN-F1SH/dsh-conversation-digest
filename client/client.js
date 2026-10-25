@@ -33,6 +33,8 @@ window.__ModuleLoader__.load({
       applied: '本次补上的约束',
       nothingApplied: '没有需要补的约束，只做了措辞整理。',
       apply: '替换输入框',
+      useThis: '用这条',
+      usedIssues: '参考了 {n} 条你的历史改进项',
       copy: '复制',
       copied: '已复制',
       close: '关闭',
@@ -67,6 +69,8 @@ window.__ModuleLoader__.load({
       applied: 'Constraints added',
       nothingApplied: 'Nothing to add — only wording was tidied.',
       apply: 'Replace draft',
+      useThis: 'Use this',
+      usedIssues: 'Drew on {n} of your past findings',
       copy: 'Copy',
       copied: 'Copied',
       close: 'Close',
@@ -144,7 +148,7 @@ window.__ModuleLoader__.load({
       const [busy, setBusy] = useState(false)
       const [result, setResult] = useState(null)
       const [error, setError] = useState(null)
-      const [copied, setCopied] = useState(false)
+      const [copied, setCopied] = useState(-1)
       const wrapRef = useRef(null)
 
       const run = useCallback(async () => {
@@ -152,7 +156,7 @@ window.__ModuleLoader__.load({
         if (!text) return
         setBusy(true)
         setError(null)
-        setCopied(false)
+        setCopied(-1)
         try {
           const payload = await post('/optimize', { draft: text })
           setResult(payload)
@@ -165,16 +169,16 @@ window.__ModuleLoader__.load({
         }
       }, [draft])
 
-      const apply = useCallback(async () => {
-        if (!result || !inputActions || typeof inputActions.setDraft !== 'function') return
-        inputActions.setDraft(result.rewritten)
+      const applyOption = useCallback(async (option) => {
+        if (!option || !inputActions || typeof inputActions.setDraft !== 'function') return
+        inputActions.setDraft(option.text)
         // 采纳即沉淀：这是资产库唯一的自动来源
         try {
           await post('/assets', {
-            body: result.rewritten,
-            category: result.category,
-            tags: result.tags,
-            issueIds: (result.applied || []).map((a) => a.issueId),
+            body: option.text,
+            category: result && result.category,
+            tags: result && result.tags,
+            issueIds: (option.applied || []).map((a) => a.issueId),
             source: 'optimize',
           })
         } catch (err) {
@@ -184,15 +188,15 @@ window.__ModuleLoader__.load({
         setOpen(false)
       }, [result, inputActions])
 
-      const copy = useCallback(async () => {
-        if (!result) return
+      const copyOption = useCallback(async (option, index) => {
+        if (!option) return
         try {
-          await navigator.clipboard.writeText(result.rewritten)
-          setCopied(true)
+          await navigator.clipboard.writeText(option.text)
+          setCopied(index)
         } catch (err) {
           setError('剪贴板不可用')
         }
-      }, [result])
+      }, [])
 
       useEffect(() => {
         if (!open) return undefined
@@ -226,19 +230,31 @@ window.__ModuleLoader__.load({
           ),
           error ? h('div', { className: 'pwb-err' }, tr('failed') + '：' + error) : null,
           result ? h('div', null,
-            h('div', { className: 'pwb-pre' }, result.rewritten),
-            h('div', { className: 'pwb-title', style: { marginTop: 10 } }, tr('applied')),
-            (result.applied && result.applied.length)
-              ? h('div', null, result.applied.map((item, index) =>
-                  h('div', { key: index, className: 'pwb-muted' }, '· ' + (item.added || item.issueId))))
-              : h('div', { className: 'pwb-muted' }, tr('nothingApplied')),
-            result.category ? h('div', { style: { marginTop: 8 } },
+            // 三个版本并排展示，每个都能单独复制或直接替换输入框
+            (result.options && result.options.length ? result.options : [{ label: '标准', text: result.rewritten, applied: result.applied || [] }])
+              .map((option, index) => h('div', { key: index, className: 'pwb-card', style: { marginTop: 10 } },
+                h('div', { className: 'pwb-row', style: { marginBottom: 6 } },
+                  h('span', null,
+                    h('span', { className: 'pwb-chip', style: { fontWeight: 600 } }, option.label),
+                    h('span', { className: 'pwb-muted' }, String(option.text || '').length + ' 字'),
+                  ),
+                  h('span', { style: { display: 'flex', gap: 6 } },
+                    h('button', { type: 'button', className: 'pwb-btn', onClick: () => copyOption(option, index) },
+                      copied === index ? tr('copied') : tr('copy')),
+                    h('button', { type: 'button', className: 'pwb-btn pwb-btn-primary', onClick: () => applyOption(option) },
+                      tr('useThis')),
+                  ),
+                ),
+                h('div', { className: 'pwb-pre', style: { margin: 0 } }, option.text),
+                (option.applied && option.applied.length)
+                  ? h('div', { style: { marginTop: 6 } }, option.applied.map((item, i) =>
+                      h('span', { key: i, className: 'pwb-chip' }, item.note || item.issueId)))
+                  : null,
+              )),
+            result.category ? h('div', { style: { marginTop: 10 } },
               h('span', { className: 'pwb-chip' }, result.category),
               (result.tags || []).map((tag, index) => h('span', { key: index, className: 'pwb-chip' }, tag))) : null,
-            h('div', { className: 'pwb-row', style: { marginTop: 12, marginBottom: 0 } },
-              h('button', { type: 'button', className: 'pwb-btn', onClick: copy }, copied ? tr('copied') : tr('copy')),
-              h('button', { type: 'button', className: 'pwb-btn pwb-btn-primary', onClick: apply }, tr('apply')),
-            ),
+            h('div', { className: 'pwb-muted', style: { marginTop: 8 } }, tr('usedIssues', { n: result.usedIssues || 0 })),
           ) : null,
         ) : null,
       )

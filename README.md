@@ -24,7 +24,7 @@ DeepSeek Harness（DSH）插件。它把三件事串成**一个闭环**，而不
 | 功能 | 触发 | 产出 |
 |---|---|---|
 | ① 会话复盘 | 设置页「开始复盘」 | 一份改进清单，每条带一句可直接粘贴的改写草稿 |
-| ② 发送前优化 | 输入框右侧 `✨ 优化` | 按你的历史改进项改写草稿，预览后一键替换 |
+| ② 发送前优化 | 输入框右侧 `✨ 优化` | **3 个版本**（简洁 / 标准 / 严谨）任选，预览后一键替换 |
 | ③ 提示词资产库 | 优化被采纳时自动归档 | 按任务类型打标签，输入时主动提示「上次这条约束有用」 |
 
 ## 安装
@@ -81,7 +81,7 @@ dsh plugin --profile web add github:LIN-F1SH/dsh-conversation-digest
 | GET | `/pwb/sessions` | 列出可复盘的时间窗口 |
 | POST | `/pwb/review` | 启动复盘，返回 `reviewId`（异步，避免 HTTP 超时） |
 | GET | `/pwb/review?id=` | 轮询复盘进度与结果 |
-| POST | `/pwb/optimize` | 按档案改写草稿 |
+| POST | `/pwb/optimize` | 按档案改写草稿，返回 3 个版本（`options[]`，另带兼容字段 `rewritten`） |
 | POST | `/pwb/recommend` | 按草稿推荐资产/改进项（纯本地匹配，不调模型） |
 | POST | `/pwb/assets` | 把一条提示词沉淀进资产库 |
 
@@ -105,7 +105,7 @@ dsh-conversation-digest/
 ## 开发
 
 ```powershell
-npm run smoke          # 67 项：宿主 14 + 档案 20 + 分析 21 + 客户端 12
+npm run smoke          # 82 项：宿主 14 + 档案 20 + 分析 27 + 会话 9 + 客户端 12
 ```
 
 客户端半区不需要浏览器也能验：`scripts/smoke-client.mjs` 桩掉 `window.__ModuleLoader__`、`document` 和 `require('react')`，直接跑 factory 与 `apply()`，断言 id 与包名一致、返回 cordis 插件、三个插槽名真实存在、组件可渲染、清理函数可用，并覆盖两种降级：语言包注册抛错时插槽仍注册、缺少 `useInput`/`inputActions` 时组件不抛。
@@ -138,13 +138,37 @@ node scripts/verify-live.mjs 3080     # 或指定 dsh web 的端口
 
 > 这套数字来自 `scripts/verify-live.mjs` 的真实输出，脚本可随时重跑。
 
+## DSH 升级与版本兼容
+
+插件架在若干宿主契约上。下表是**已知耦合点、升级后可能出现的症状、以及现在的兜底**——不是保证永不坏，而是坏的时候你能一眼定位。
+
+| 契约 | 用在哪 | 变了会怎样 | 现在的兜底 |
+|---|---|---|---|
+| 会话日志 `session[.vN].jsonl[.zstd]` | 复盘读取 | 新格式读不到 → 报「时间窗口内没有可复盘的会话」 | **按版本发现**：取最高版本、压缩与否看魔数而不信后缀、未压缩也能读 |
+| 多帧 zstd 拼接 | 同上 | 只读到头部 → 会话看起来「是空的」 | 按 `28 B5 2F FD` 逐帧解压 |
+| `user/message.source.kind` | 复盘过滤 | 系统注入被当成提问 → 结论全是噪声 | 只认 `kind === 'user'`，未知 kind 一律排除 |
+| `tool/ptc-dispatch`、`tool/result.error` | 失败检测 | 失败数被低估 | 结构化字段 + 文本启发式双通道 |
+| `llm.stream()`、`agentDefaultModel.currentSelection()` | 复盘 / 优化 | 调用抛错 | 服务缺失时给明确提示，不崩；没选模型也提示 |
+| `webServer.register()` | 全部 API | 路由全 404 | 注入失败只报错，不拖垮宿主 |
+| `__ModuleLoader__.load`、`dsh.client` | 界面三处插槽 | 界面完全不出现 | bundle 内每步注册独立 try/catch，单点失败只少一块 |
+| 插槽名 `conversation.input.right` 等 | 界面位置 | 按钮不出现 | 注册失败降级，不影响另外两块 |
+| `useInput` / `inputActions` | 读写草稿 | 按钮变灰 / 插入无效 | 类型守卫；缺失时按钮禁用而不报错 |
+
+**升级后先看体检**：
+
+```powershell
+curl http://127.0.0.1:19387/pwb/health
+```
+
+它会报 `sessions.formats`（实际读到的格式，如 `["v4.zstd"]`）、`compat.zstd`、`compat.services`（llm / agentDefaultModel / webServer 是否在位）、`profile.exists`、`ready`。`ready: false` 就说明某条链路断了，再按上表定位。
+
 ## 已知限制
 
 - 复盘一次只发一个模型请求，材料已压缩（只取真人提问 + 失败摘要），但仍受窗口大小限制；输出被截断时插件会明确报 `TRUNCATED` 并重试一次，而不是静默失败。
 - 复盘的问题合并靠三条判据：模型复用 id（提示词里会要求）→ 标题归一化后完全相同 → **引用了同一条证据**（同 session 同 seq）。纯字符串相似度阈值定得很高（0.85），因为「问题 1 / 问题 2」这种只差一个数字的标题会被误并。
 - 资产推荐用字符 bigram 相似度做本地匹配，不做语义检索——够用、零成本、可预测。
 - 会话压缩（compaction）后，被折叠的早期事件仍在日志里，本插件按时间顺序读取，不区分「模型当前可见」的 surface。
-- 只支持 `session.v4`；将来格式升到 v5 需要适配（解析层会忽略未知事件类型，不会崩）。
+- 只支持 `session.v4`（并按最高版本发现）；将来格式升到 v5，解析层会忽略未知事件类型、不会崩，但新字段的语义需要人工适配。
 
 ## 许可
 

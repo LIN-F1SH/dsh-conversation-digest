@@ -145,6 +145,52 @@ ok('优化输出：没有 rewrite 内容时报错', () => {
   assert.ok(parseOptimizeOutput('完全不是 JSON').error)
 })
 
+ok('优化输出：三档方案按 简洁→标准→严谨 排序，默认推荐标准', () => {
+  const text = JSON.stringify({
+    options: [
+      { label: '严谨', text: '严谨版内容' },
+      { label: '简洁', text: '简洁版内容' },
+      { label: '标准', text: '标准版内容' },
+    ],
+    category: '代码审查',
+  })
+  const out = parseOptimizeOutput(text)
+  assert.equal(out.error, null)
+  assert.deepEqual(out.options.map((o) => o.label), ['简洁', '标准', '严谨'])
+  assert.equal(out.rewritten, '标准版内容', 'rewritten 兼容字段应取标准版')
+})
+
+ok('优化输出：缺 label 时按顺序补名', () => {
+  const out = parseOptimizeOutput(JSON.stringify({ options: [{ text: 'A' }, { text: 'B' }] }))
+  assert.deepEqual(out.options.map((o) => o.label), ['简洁', '标准'])
+})
+
+ok('优化输出：超长方案被截断并加省略号（不许出现小作文）', () => {
+  const out = parseOptimizeOutput(JSON.stringify({ options: [{ label: '简洁', text: 'X'.repeat(600) }] }))
+  assert.ok(out.options[0].text.length <= 201, '实际 ' + out.options[0].text.length)
+  assert.ok(out.options[0].text.endsWith('…'))
+})
+
+ok('优化输出：applied 里编造的 issueId 被过滤', () => {
+  const out = parseOptimizeOutput(JSON.stringify({
+    options: [{ label: '标准', text: '正文', applied: [{ issueId: 'issue-real', note: '补格式' }, { issueId: 'issue-fake', note: '编的' }] }],
+  }), { knownIssueIds: ['issue-real'] })
+  assert.equal(out.options[0].applied.length, 1)
+  assert.equal(out.options[0].applied[0].note, '补格式')
+})
+
+ok('优化输出：空 options 会回落，不至于整次失败', () => {
+  const out = parseOptimizeOutput(JSON.stringify({ options: [] }))
+  assert.ok(out.error, '没有任何版本时应报错')
+})
+
+ok('优化输出：老形态（单个 rewritten）仍然兼容', () => {
+  const out = parseOptimizeOutput(JSON.stringify({ rewritten: '老格式正文', applied: [] }))
+  assert.equal(out.error, null)
+  assert.equal(out.options.length, 1)
+  assert.equal(out.options[0].label, '标准')
+})
+
 ok('打标签输出：缺 category 时返回 null', () => {
   assert.equal(parseTaggingOutput('{"title":"x"}'), null)
   assert.equal(parseTaggingOutput('{"category":"数据分析","title":"表格输出","tags":["t"]}').category, '数据分析')

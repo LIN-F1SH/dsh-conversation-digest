@@ -107,18 +107,25 @@ if (optimized.status !== 200) {
 } else {
   const o = optimized.body
   console.log(`  用到的改进项：${o.usedIssues} 条`)
-  console.log(`  本次补上：${(o.applied || []).map((a) => a.added).join(' / ') || '（无需补充）'}`)
   console.log(`  分类：${o.category}　标签：${(o.tags || []).join(', ')}`)
-  console.log('  改写结果：')
-  console.log(o.rewritten.split('\n').map((l) => '    ' + l).join('\n'))
+  const options = o.options && o.options.length ? o.options : [{ label: '标准', text: o.rewritten, applied: o.applied || [] }]
+  console.log(`  给出 ${options.length} 个版本：`)
+  for (const option of options) {
+    console.log(`\n  ── ${option.label}（${String(option.text || '').length} 字）──`)
+    console.log(option.text.split('\n').map((l) => '    ' + l).join('\n'))
+    if (option.applied && option.applied.length) {
+      console.log('    补上：' + option.applied.map((a) => a.note || a.issueId).join(' / '))
+    }
+  }
 
-  // 闭环第三环：采纳 → 沉淀 → 下次推荐。这里直接走接口，等价于界面上点「替换输入框」
-  console.log('\n  模拟采纳并沉淀为资产 …')
+  // 闭环第三环：采纳 → 沉淀 → 下次推荐。这里直接走接口，等价于界面上点「用这条」
+  const chosen = options.find((x) => x.label === '标准') || options[0]
+  console.log(`\n  模拟采纳「${chosen.label}」并沉淀为资产 …`)
   const sunk = await post('/pwb/assets', {
-    body: o.rewritten,
+    body: chosen.text,
     category: o.category,
     tags: o.tags,
-    issueIds: (o.applied || []).map((a) => a.issueId),
+    issueIds: (chosen.applied || []).map((a) => a.issueId),
     source: 'optimize',
   })
   if (sunk.status === 200) {
