@@ -1,5 +1,7 @@
 # dsh-conversation-digest · 个人提示词效能工作台
 
+[![ci](https://github.com/LIN-F1SH/dsh-conversation-digest/actions/workflows/ci.yml/badge.svg)](https://github.com/LIN-F1SH/dsh-conversation-digest/actions/workflows/ci.yml)
+
 DeepSeek Harness（DSH）插件。它把三件事串成**一个闭环**，而不是三个独立功能：
 
 ```text
@@ -42,7 +44,11 @@ DeepSeek Harness（DSH）插件。它把三件事串成**一个闭环**，而不
 ### Web（`dsh web`）
 
 ```powershell
+# 跟随 main（会拿到最新提交）
 dsh plugin --profile web add github:LIN-F1SH/dsh-conversation-digest
+
+# 钉住某个版本（推荐用于生产）
+dsh plugin --profile web add github:LIN-F1SH/dsh-conversation-digest#v0.1.0
 ```
 
 > ⚠️ **宿主代码改动后必须重启应用**。插件以 `link:` 安装时，改 `lib/*` 不会热重载（ESM 模块缓存）；禁用再启用也只会重跑 `apply()`，不会重载代码。客户端 `client/client.js` 的改动刷新页面（Ctrl+F5）即可。
