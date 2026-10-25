@@ -13,7 +13,8 @@ process.env.DSH_HOME = tmpHome
 
 const {
   emptyProfile, loadProfile, saveProfile, mergeIssues, upsertAsset, normalizeTitle,
-  issueKey, similarity, recommend, activeIssues, recordReview, PROFILE_FILE, PROFILE_DIR,
+  issueKey, similarity, recommend, activeIssues, recordReview, normalizeSettings, suggestTitle,
+  PROFILE_FILE, PROFILE_DIR,
 } = await import('../lib/profile.mjs')
 
 let passed = 0
@@ -204,6 +205,30 @@ ok('结构不是对象时也走保护路径', () => {
   const { profile, warning } = loadProfile()
   assert.ok(warning)
   assert.equal(profile.issues.length, 0)
+})
+
+ok('设置校验：非法档位被过滤、默认档回落到列表首项', () => {
+  const s = normalizeSettings({ optimizeVariants: ['简洁', '胡说'], optimizeDefault: '严谨' })
+  assert.deepEqual(s.optimizeVariants, ['简洁'])
+  assert.equal(s.optimizeDefault, '简洁', '默认档不在生成列表里时必须回落')
+})
+
+ok('设置校验：空档位列表不会被接受（否则没有可生成的版本）', () => {
+  const s = normalizeSettings({ optimizeVariants: [] })
+  assert.deepEqual(s.optimizeVariants, ['简洁', '标准', '严谨'])
+})
+
+ok('设置校验：数值越界被夹到合理区间', () => {
+  const s = normalizeSettings({ reviewWindowDays: 0, reviewMaxSessions: 999, recommendThreshold: -5 })
+  assert.equal(s.reviewWindowDays, 1)
+  assert.equal(s.reviewMaxSessions, 20)
+  assert.equal(s.recommendThreshold, 0)
+})
+
+ok('设置校验：缺字段时保留默认值', () => {
+  const s = normalizeSettings({})
+  assert.equal(s.enabled, true)
+  assert.equal(s.optimizeDefault, '标准')
 })
 
 ok('复盘记录写入并裁剪', () => {

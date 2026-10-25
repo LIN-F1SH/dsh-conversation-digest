@@ -59,6 +59,30 @@ window.__ModuleLoader__.load({
       dismissed: '已忽略',
       times: '出现 {n} 次',
       copyRewrite: '复制改写草稿',
+      settings: '设置',
+      save: '保存',
+      saving: '保存中…',
+      saved: '已保存',
+      cancel: '取消',
+      enabled: '启用插件',
+      enabledHint: '关掉后不再推荐，但仍可手动优化',
+      variants: '生成哪几档',
+      variantsHint: '至少保留一档；档位越少越快越省',
+      defaultVariant: '默认版本',
+      defaultVariantHint: '这一档排在最前并标「推荐」',
+      autoRecommend: '输入时自动推荐',
+      autoRecommendHint: '边打字边匹配历史模板与该补的约束',
+      threshold: '推荐灵敏度',
+      thresholdHint: '越小越容易推荐（0–20）',
+      windowDays: '复盘回看天数',
+      windowDaysHint: '只看最近这么多天的会话（1–365）',
+      maxSessions: '单次复盘会话数',
+      maxSessionsHint: '越多越慢越费 token（1–20）',
+      includeIssues: '优化时参考哪些改进项',
+      includeIssuesHint: 'matched-only = 只带与任务类型匹配的；all-active = 全部生效中',
+      clearAll: '清空档案',
+      clearConfirm: '确定清空全部改进项与资产？',
+      clearYes: '确定清空',
       loadFailed: '读取档案失败',
       noModel: '还没有选择默认模型',
     }
@@ -95,6 +119,30 @@ window.__ModuleLoader__.load({
       dismissed: 'Dismissed',
       times: 'seen {n}×',
       copyRewrite: 'Copy rewrite',
+      settings: 'Settings',
+      save: 'Save',
+      saving: 'Saving…',
+      saved: 'Saved',
+      cancel: 'Cancel',
+      enabled: 'Enable plugin',
+      enabledHint: 'Off disables recommendations; manual optimize still works',
+      variants: 'Versions to generate',
+      variantsHint: 'Keep at least one; fewer is faster and cheaper',
+      defaultVariant: 'Default version',
+      defaultVariantHint: 'Shown first and marked recommended',
+      autoRecommend: 'Recommend while typing',
+      autoRecommendHint: 'Match past templates and missing constraints as you type',
+      threshold: 'Recommendation sensitivity',
+      thresholdHint: 'Lower means easier to trigger (0–20)',
+      windowDays: 'Review lookback (days)',
+      windowDaysHint: 'Only sessions from the last N days (1–365)',
+      maxSessions: 'Sessions per review',
+      maxSessionsHint: 'More is slower and costs more tokens (1–20)',
+      includeIssues: 'Findings used by optimize',
+      includeIssuesHint: 'matched-only = task-type matches; all-active = every active finding',
+      clearAll: 'Clear profile',
+      clearConfirm: 'Delete all findings and assets?',
+      clearYes: 'Yes, clear',
       loadFailed: 'Failed to load profile',
       noModel: 'No default model selected',
     }
@@ -315,6 +363,122 @@ window.__ModuleLoader__.load({
 
     // —— ③ 设置页 ——
 
+    // —— 设置面板 ——
+
+    function SettingsPanel(props) {
+      const { settings, tr, onSave, onClear } = props
+      const [draft, setDraft] = useState(settings)
+      const [state, setState] = useState('idle') // idle | saving | saved
+      const [error, setError] = useState(null)
+      const [confirmClear, setConfirmClear] = useState(false)
+
+      // 外面刷新了档案就同步回来（比如别处改了设置）
+      useEffect(() => {
+        setDraft(settings)
+      }, [settings])
+
+      const set = (patch) => {
+        setDraft((prev) => Object.assign({}, prev, patch))
+        setState('idle')
+      }
+
+      const toggleVariant = (label) => {
+        const list = Array.isArray(draft.optimizeVariants) ? draft.optimizeVariants : []
+        const next = list.includes(label) ? list.filter((x) => x !== label) : [...list, label]
+        // 至少留一档，否则没有可生成的版本
+        if (!next.length) return
+        const ordered = ['简洁', '标准', '严谨'].filter((x) => next.includes(x))
+        const defaultLabel = ordered.includes(draft.optimizeDefault) ? draft.optimizeDefault : ordered[0]
+        set({ optimizeVariants: ordered, optimizeDefault: defaultLabel })
+      }
+
+      const save = async () => {
+        setState('saving')
+        setError(null)
+        try {
+          await onSave(draft)
+          setState('saved')
+        } catch (err) {
+          setError(err.message)
+          setState('idle')
+        }
+      }
+
+      const row = (label, control, hint) => h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 0', borderBottom: '1px solid var(--dsw-alias-border-l1)' } },
+        h('div', null,
+          h('div', null, label),
+          hint ? h('div', { className: 'pwb-muted' }, hint) : null,
+        ),
+        h('div', { style: { display: 'flex', gap: 6, alignItems: 'center' } }, control),
+      )
+
+      const seg = (value, options, onPick) => h('div', { style: { display: 'flex', gap: 4 } },
+        options.map((option) => h('button', {
+          key: option,
+          type: 'button',
+          className: option === value ? 'pwb-btn pwb-btn-primary' : 'pwb-btn',
+          onClick: () => onPick(option),
+        }, option)))
+
+      const numberInput = (value, onChange, min, max) => h('input', {
+        type: 'number',
+        value,
+        min,
+        max,
+        style: { width: 72, padding: '4px 6px', borderRadius: 8, border: '1px solid var(--dsw-alias-border-l1)', background: 'var(--dsw-alias-bg-layer-1)', color: 'var(--dsw-alias-label-primary)' },
+        onChange: (event) => onChange(Number(event.target.value)),
+      })
+
+      return h('div', null,
+        row(tr('enabled'), h('input', {
+          type: 'checkbox',
+          checked: Boolean(draft.enabled),
+          onChange: (event) => set({ enabled: event.target.checked }),
+        }), tr('enabledHint')),
+
+        row(tr('variants'), h('div', { style: { display: 'flex', gap: 4 } },
+          ['简洁', '标准', '严谨'].map((label) => h('button', {
+            key: label,
+            type: 'button',
+            className: (draft.optimizeVariants || []).includes(label) ? 'pwb-btn pwb-btn-primary' : 'pwb-btn',
+            onClick: () => toggleVariant(label),
+          }, label))), tr('variantsHint')),
+
+        row(tr('defaultVariant'), seg(draft.optimizeDefault, (draft.optimizeVariants || ['标准']), (label) => set({ optimizeDefault: label })), tr('defaultVariantHint')),
+
+        row(tr('autoRecommend'), h('input', {
+          type: 'checkbox',
+          checked: Boolean(draft.autoRecommend),
+          onChange: (event) => set({ autoRecommend: event.target.checked }),
+        }), tr('autoRecommendHint')),
+
+        row(tr('threshold'), numberInput(draft.recommendThreshold, (value) => set({ recommendThreshold: value }), 0, 20), tr('thresholdHint')),
+
+        row(tr('windowDays'), numberInput(draft.reviewWindowDays, (value) => set({ reviewWindowDays: value }), 1, 365), tr('windowDaysHint')),
+
+        row(tr('maxSessions'), numberInput(draft.reviewMaxSessions, (value) => set({ reviewMaxSessions: value }), 1, 20), tr('maxSessionsHint')),
+
+        row(tr('includeIssues'), seg(draft.optimizeIncludeIssues, ['matched-only', 'all-active'], (value) => set({ optimizeIncludeIssues: value })), tr('includeIssuesHint')),
+
+        h('div', { className: 'pwb-row', style: { marginTop: 14, marginBottom: 0 } },
+          h('div', { style: { display: 'flex', gap: 8, alignItems: 'center' } },
+            h('button', { type: 'button', className: 'pwb-btn pwb-btn-primary', onClick: save, disabled: state === 'saving' },
+              state === 'saving' ? tr('saving') : state === 'saved' ? tr('saved') : tr('save')),
+            error ? h('span', { className: 'pwb-err', style: { marginTop: 0 } }, error) : null,
+          ),
+          confirmClear
+            ? h('div', { style: { display: 'flex', gap: 8, alignItems: 'center' } },
+                h('span', { className: 'pwb-muted' }, tr('clearConfirm')),
+                h('button', { type: 'button', className: 'pwb-btn', onClick: async () => { await onClear(); setConfirmClear(false) } }, tr('clearYes')),
+                h('button', { type: 'button', className: 'pwb-btn', onClick: () => setConfirmClear(false) }, tr('cancel')),
+              )
+            : h('button', { type: 'button', className: 'pwb-btn', onClick: () => setConfirmClear(true) }, tr('clearAll')),
+        ),
+      )
+    }
+
+    // —— 设置页 ——
+
     function WorkbenchSection(props) {
       const t = props.t
       const [data, setData] = useState(null)
@@ -389,6 +553,21 @@ window.__ModuleLoader__.load({
         }
       }, [load])
 
+      const clearProfile = useCallback(async () => {
+        try {
+          await post('/profile', { action: 'clear' })
+          await load()
+        } catch (err) {
+          setError(err.message)
+        }
+      }, [load])
+
+      const saveSettings = useCallback(async (next) => {
+        // 失败要抛回给设置面板，让它显示错误并保持未保存状态
+        await post('/profile', { action: 'update-settings', settings: next })
+        await load()
+      }, [load])
+
       const copy = useCallback(async (text) => {
         try {
           await navigator.clipboard.writeText(text)
@@ -446,9 +625,19 @@ window.__ModuleLoader__.load({
             className: tab === 'assets' ? 'pwb-btn pwb-btn-primary' : 'pwb-btn',
             onClick: () => setTab('assets'),
           }, tr('assets')),
+          h('button', {
+            type: 'button',
+            className: tab === 'settings' ? 'pwb-btn pwb-btn-primary' : 'pwb-btn',
+            onClick: () => setTab('settings'),
+          }, tr('settings')),
         ),
 
-        tab === 'issues' ? (
+        tab === 'settings' ? h(SettingsPanel, {
+          settings: data.settings,
+          tr,
+          onSave: saveSettings,
+          onClear: clearProfile,
+        }) : tab === 'issues' ? (
           issues.length === 0 ? h('div', { className: 'pwb-muted' }, tr('emptyIssues'))
             : issues.map((issue) => h('div', { key: issue.id, className: 'pwb-card' },
                 h('div', { className: 'pwb-row', style: { marginBottom: 4 } },

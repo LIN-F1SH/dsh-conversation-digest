@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict'
 import {
   extractJson, parseReviewOutput, parseOptimizeOutput, parseTaggingOutput,
-  buildOptimizePrompt, buildReviewPrompt, digestSession,
+  buildOptimizePrompt, buildReviewPrompt, digestSession, arrangeOptions, buildOptimizeSystem,
 } from '../lib/analyze.mjs'
 
 let passed = 0
@@ -189,6 +189,35 @@ ok('优化输出：老形态（单个 rewritten）仍然兼容', () => {
   assert.equal(out.error, null)
   assert.equal(out.options.length, 1)
   assert.equal(out.options[0].label, '标准')
+})
+
+ok('按设置整理方案：只留选定档位，默认档排最前', () => {
+  const options = [
+    { label: '简洁', text: 'A', applied: [] },
+    { label: '标准', text: 'B', applied: [] },
+    { label: '严谨', text: 'C', applied: [] },
+  ]
+  const one = arrangeOptions(options, { variants: ['简洁'], defaultLabel: '简洁' })
+  assert.equal(one.length, 1)
+  assert.equal(one[0].label, '简洁')
+
+  const two = arrangeOptions(options, { variants: ['简洁', '严谨'], defaultLabel: '严谨' })
+  assert.deepEqual(two.map((o) => o.label), ['严谨', '简洁'], '默认档必须排最前')
+})
+
+ok('按设置整理方案：模型标签对不上时退回全部，不让用户空手', () => {
+  const options = [{ label: '方案 A', text: 'A', applied: [] }]
+  const out = arrangeOptions(options, { variants: ['简洁'], defaultLabel: '简洁' })
+  assert.equal(out.length, 1)
+  assert.equal(out[0].label, '方案 A')
+  assert.deepEqual(arrangeOptions([], { variants: ['简洁'] }), [])
+})
+
+ok('按设置生成系统提示词：只要一档时提示词也只要求一档', () => {
+  const system = buildOptimizeSystem({ variants: ['简洁'], defaultLabel: '简洁' })
+  assert.match(system, /1 个不同取舍的版本/)
+  assert.match(system, /label="简洁"/)
+  assert.ok(!system.includes('label="严谨"'), '没选的档位不该出现在提示词里')
 })
 
 ok('打标签输出：缺 category 时返回 null', () => {
