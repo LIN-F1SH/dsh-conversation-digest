@@ -98,6 +98,41 @@ ok('用户 dismiss 掉的问题不会被再次复盘覆盖回 active', () => {
   assert.equal(p.issues[0].status, 'dismissed', '用户的选择必须被尊重')
 })
 
+ok('同一个问题两次复盘措辞不同：靠证据重叠合并', () => {
+  const p = emptyProfile()
+  mergeIssues(p, [{
+    kind: 'missing-precondition',
+    title: '只问能否接入软件，不给路径和环境',
+    occurrences: 3,
+    evidence: [{ sessionId: 's1', seq: 17, excerpt: '你能接入我的PowerDesigner软件吗' }],
+  }])
+  const res = mergeIssues(p, [{
+    kind: 'missing-precondition',
+    title: '接入本地软件前不交代环境与路径',   // 措辞完全不同
+    occurrences: 4,
+    evidence: [{ sessionId: 's1', seq: 17, excerpt: '你能接入我的PowerDesigner软件吗' }],
+  }])
+  assert.equal(p.issues.length, 1, '同一条证据应判为同一个问题')
+  assert.equal(res.merged, 1)
+  assert.equal(p.issues[0].occurrences, 7)
+})
+
+ok('模型复用 id 时合并（比字符串匹配可靠）', () => {
+  const p = emptyProfile()
+  mergeIssues(p, [{ kind: 'ambiguous', title: '交付标准含糊' }])
+  const id = p.issues[0].id
+  const res = mergeIssues(p, [{ id, kind: 'ambiguous', title: '完全不同的措辞也行', occurrences: 2 }])
+  assert.equal(p.issues.length, 1)
+  assert.equal(res.merged, 1)
+})
+
+ok('只差一个数字、且证据不同的两条不会被合并', () => {
+  const p = emptyProfile()
+  mergeIssues(p, [{ kind: 'k', title: '问题 1', evidence: [{ sessionId: 's1', seq: 1, excerpt: '' }] }])
+  mergeIssues(p, [{ kind: 'k', title: '问题 2', evidence: [{ sessionId: 's2', seq: 9, excerpt: '' }] }])
+  assert.equal(p.issues.length, 2, '标题相近但证据不同，不应合并')
+})
+
 ok('相似度函数：同文为 1，无关为低', () => {
   assert.equal(similarity('你好世界', '你好世界'), 1)
   assert.ok(similarity('请用 Markdown 表格输出结果', '请用 Markdown 表格输出结果内容') > 0.6)

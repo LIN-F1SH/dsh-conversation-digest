@@ -111,6 +111,25 @@ if (optimized.status !== 200) {
   console.log(`  分类：${o.category}　标签：${(o.tags || []).join(', ')}`)
   console.log('  改写结果：')
   console.log(o.rewritten.split('\n').map((l) => '    ' + l).join('\n'))
+
+  // 闭环第三环：采纳 → 沉淀 → 下次推荐。这里直接走接口，等价于界面上点「替换输入框」
+  console.log('\n  模拟采纳并沉淀为资产 …')
+  const sunk = await post('/pwb/assets', {
+    body: o.rewritten,
+    category: o.category,
+    tags: o.tags,
+    issueIds: (o.applied || []).map((a) => a.issueId),
+    source: 'optimize',
+  })
+  if (sunk.status === 200) {
+    console.log(`  资产库：${sunk.body.action} —— ${sunk.body.asset.title}（${sunk.body.asset.category}，采纳 ${sunk.body.asset.stats.adoptedCount} 次）`)
+    // 再用一条相似草稿试推荐
+    const rec = await post('/pwb/recommend', { draft: '帮我看看这段代码有没有问题，逐文件检查' })
+    const items = (rec.body && rec.body.items) || []
+    console.log(`  推荐：命中 ${items.length} 条${items.length ? ' → ' + items.map((i) => `[${i.type}] ${i.title}`).join('；') : ''}`)
+  } else {
+    console.log(`  ⚠️ 沉淀失败 HTTP ${sunk.status}: ${JSON.stringify(sunk.body)}`)
+  }
 }
 
 // 4) 档案复核
@@ -118,6 +137,8 @@ console.log('\n[4/4] 复核档案 …')
 const profile = await get('/pwb/profile')
 const p = profile.body
 console.log(`  改进项 ${p.counts.issues}（生效中 ${p.counts.activeIssues}） · 资产 ${p.counts.assets} · 复盘记录 ${p.counts.reviews}`)
+const firstAsset = (p.assets || [])[0]
+if (firstAsset) console.log(`  最新资产：${firstAsset.title}　分类=${firstAsset.category}　正文前 40 字：${firstAsset.body.slice(0, 40)}`)
 if (p.warning) console.log(`  ⚠️ ${p.warning}`)
 
 console.log('\n' + line('═'))
