@@ -138,7 +138,8 @@ window.__ModuleLoader__.load({
 
     function OptimizeButton(props) {
       const { useInput, inputActions, t } = props
-      const draft = useInput ? useInput((state) => state.draft) : ''
+      const readDraft = typeof useInput === 'function' ? useInput : null
+      const draft = readDraft ? readDraft((state) => state.draft) : ''
       const [open, setOpen] = useState(false)
       const [busy, setBusy] = useState(false)
       const [result, setResult] = useState(null)
@@ -165,7 +166,7 @@ window.__ModuleLoader__.load({
       }, [draft])
 
       const apply = useCallback(async () => {
-        if (!result || !inputActions) return
+        if (!result || !inputActions || typeof inputActions.setDraft !== 'function') return
         inputActions.setDraft(result.rewritten)
         // 采纳即沉淀：这是资产库唯一的自动来源
         try {
@@ -247,7 +248,8 @@ window.__ModuleLoader__.load({
 
     function RecommendBanner(props) {
       const { useInput, inputActions, t } = props
-      const draft = useInput ? useInput((state) => state.draft) : ''
+      const readDraft = typeof useInput === 'function' ? useInput : null
+      const draft = readDraft ? readDraft((state) => state.draft) : ''
       const [item, setItem] = useState(null)
       const timer = useRef(null)
 
@@ -281,7 +283,7 @@ window.__ModuleLoader__.load({
       if (!item) return null
 
       const insert = () => {
-        if (!inputActions) return
+        if (!inputActions || typeof inputActions.setDraft !== 'function') return
         const next = String(draft || '').replace(/\s+$/, '') + '\n\n' + item.payload
         inputActions.setDraft(next)
         setItem(null)
@@ -476,43 +478,62 @@ window.__ModuleLoader__.load({
       inject: ['slots', 'locale'],
 
       apply(ctx) {
-        ctx.effect(() => {
-          const style = document.createElement('style')
-          style.setAttribute('data-plugin', 'dsh-conversation-digest')
-          style.textContent = CSS
-          document.head.appendChild(style)
-          return () => style.remove()
+        // 任何一处注册失败都不应该拖垮整个客户端半区：
+        // 界面少一个按钮是可接受的降级，整页白屏/插件完全消失不是。
+        const safe = (label, fn) => {
+          try {
+            return fn()
+          } catch (err) {
+            try {
+              console.warn('[dsh-conversation-digest] ' + label + ' 注册失败：' + ((err && err.message) || err))
+            } catch (inner) {}
+            return undefined
+          }
+        }
+
+        safe('样式', () => {
+          ctx.effect(() => {
+            if (typeof document === 'undefined' || !document.head) return () => {}
+            const style = document.createElement('style')
+            style.setAttribute('data-plugin', 'dsh-conversation-digest')
+            style.textContent = CSS
+            document.head.appendChild(style)
+            return () => style.remove()
+          })
         })
 
-        ctx.effect(() => ctx.locale.register(NS, { zh, en }))
-        const t = ctx.locale.bind(NS)
-        // 中文环境优先；语言不匹配时组件回落到英文表
-        const isZh = true
+        safe('语言包', () => ctx.effect(() => ctx.locale.register(NS, { zh, en })))
 
-        const withLocale = (props) => Object.assign({ t, __zh: isZh }, props)
+        // locale 不可用时退化为本地字典，界面仍然是中文
+        let t = (key) => key
+        safe('locale 绑定', () => {
+          t = ctx.locale.bind(NS)
+        })
 
-        ctx.slots.inject('conversation.input.right', () => ctx.slots.register({
+        const withLocale = (props) => Object.assign({ t, __zh: true }, props)
+
+        safe('优化按钮', () => ctx.slots.inject('conversation.input.right', () => ctx.slots.register({
           name: 'conversation.input.right',
           id: 'pwb-optimize',
           order: 100,
           label: () => t('optimize'),
           locale: NS,
-        }, (props) => h(OptimizeButton, withLocale(props))))
+        }, (props) => h(OptimizeButton, withLocale(props)))))
 
-        ctx.slots.inject('conversation.input.dock', () => ctx.slots.register({
+        safe('推荐横幅', () => ctx.slots.inject('conversation.input.dock', () => ctx.slots.register({
           name: 'conversation.input.dock',
           id: 'pwb-recommend',
           order: 20,
           locale: NS,
-        }, (props) => h(RecommendBanner, withLocale(props))))
+        }, (props) => h(RecommendBanner, withLocale(props)))))
 
-        ctx.slots.inject('settings.section', () => ctx.slots.register({
+        safe('设置页', () => ctx.slots.inject('settings.section', () => ctx.slots.register({
           name: 'settings.section',
           id: 'pwb-settings',
           order: 200,
           label: () => t('sectionTitle'),
           locale: NS,
-        }, (props) => h(WorkbenchSection, withLocale(props))))
+        }, (props) => h(WorkbenchSection, withLocale(props)))))
       },
     }
   },

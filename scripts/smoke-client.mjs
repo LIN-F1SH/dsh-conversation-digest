@@ -158,4 +158,37 @@ ok('卸载时 effect 的清理函数可安全调用', () => {
   }
 })
 
+ok('locale.register 抛错时，三个插槽仍然注册（降级而非哑掉）', () => {
+  const registered2 = []
+  const brokenCtx = {
+    effect() {
+      return () => {}
+    },
+    locale: {
+      register() {
+        throw new Error('该语言已注册')
+      },
+      bind: () => (key) => key,
+    },
+    slots: {
+      inject: (slot, callback) => {
+        const dispose = callback()
+        return typeof dispose === 'function' ? dispose : () => {}
+      },
+      register(meta) {
+        registered2.push(meta.name)
+        return () => {}
+      },
+    },
+  }
+  assert.doesNotThrow(() => plugin.apply(brokenCtx))
+  assert.equal(registered2.length, 3, '语言包失败不应该影响插槽注册')
+})
+
+ok('缺少 useInput / inputActions 时组件仍能渲染（不抛异常）', () => {
+  for (const { component } of registered) {
+    assert.doesNotThrow(() => component({ t: (key) => key }))
+  }
+})
+
 console.log(`\n全部通过（${passed} 项）`)
