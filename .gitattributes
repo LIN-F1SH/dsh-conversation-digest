@@ -1,0 +1,16 @@
+# 统一换行符：仓库里一律 LF，检出到 Windows 也不转换，避免「整文件翻动」的假 diff。
+* text=auto eol=lf
+
+# 二进制文件不要做任何转换
+*.png binary
+*.jpg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.zip binary
+*.docx binary
+*.xlsx binary
+*.pptx binary
+
+# Windows 专用脚本如果将来需要 CRLF，可单独在这里覆盖
+# *.ps1 text eol=crlf
