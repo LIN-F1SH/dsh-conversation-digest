@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
   extractJson, parseReviewOutput, parseOptimizeOutput, parseTaggingOutput,
   buildOptimizePrompt, buildReviewPrompt, digestSession, arrangeOptions, buildOptimizeSystem,
+  callModel,
 } from '../lib/analyze.mjs'
 
 let passed = 0
@@ -218,6 +219,32 @@ ok('按设置生成系统提示词：只要一档时提示词也只要求一档'
   assert.match(system, /1 个不同取舍的版本/)
   assert.match(system, /label="简洁"/)
   assert.ok(!system.includes('label="严谨"'), '没选的档位不该出现在提示词里')
+})
+
+ok('callModel 把模型自报的 usage 一起带回来', async () => {
+  const fakeLlm = {
+    stream: async function* () {
+      yield { type: 'text-delta', text: '{"issues":[]}' }
+      yield { type: 'usage', usage: { inputTokens: 1234, outputTokens: 56, cacheReadTokens: 789 } }
+      yield { type: 'finish', reason: { kind: 'stop' } }
+    },
+  }
+  const out = await callModel(fakeLlm, { provider: 'p', model: 'm', system: 's', prompt: 'x' })
+  assert.equal(out.text, '{"issues":[]}')
+  assert.deepEqual(out.usage, { inputTokens: 1234, outputTokens: 56, cacheReadTokens: 789 })
+})
+
+ok('callModel 遇到 max-tokens 截断时明确报错', async () => {
+  const fakeLlm = {
+    stream: async function* () {
+      yield { type: 'text-delta', text: '{"issues":[' }
+      yield { type: 'finish', reason: { kind: 'max-tokens' } }
+    },
+  }
+  await assert.rejects(
+    () => callModel(fakeLlm, { provider: 'p', model: 'm', system: 's', prompt: 'x' }),
+    /截断/,
+  )
 })
 
 ok('打标签输出：缺 category 时返回 null', () => {

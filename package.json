@@ -19,7 +19,8 @@
     "smoke:analyze": "node scripts/smoke-analyze.mjs",
     "smoke:client": "node scripts/smoke-client.mjs",
     "smoke:sessions": "node scripts/smoke-sessions.mjs",
-    "verify:live": "node scripts/verify-live.mjs"
+    "verify:live": "node scripts/verify-live.mjs",
+    "measure:tokens": "node scripts/measure-tokens.mjs"
   },
   "keywords": [
     "dsh",
