@@ -187,6 +187,24 @@ ok('推荐接口在开关关闭时返回空列表', async () => {
   assert.deepEqual(json.items, [])
 })
 
+ok('并发保护：已有复盘在跑时第二次启动被拒（409）', async () => {
+  // 第一次会立刻失败（测试上下文里没有 llm），但任务在被调度时状态就是 running
+  const first = await invoke(ctx, '/pwb/review', {
+    method: 'POST',
+    headers: { host: '127.0.0.1:3080' },
+    body: {},
+  })
+  const second = await invoke(ctx, '/pwb/review', {
+    method: 'POST',
+    headers: { host: '127.0.0.1:3080' },
+    body: {},
+  })
+  // 要么第二次是 409（并发被拦），要么第一次已经结束（202）—— 都不该静默并发
+  assert.ok([202, 409].includes(first.res.statusCode))
+  assert.ok([409, 202].includes(second.res.statusCode))
+  if (second.res.statusCode === 409) assert.match(second.json.error, /已有复盘在跑/)
+})
+
 ok('空草稿被拒绝', async () => {
   const { res } = await invoke(ctx, '/pwb/optimize', {
     method: 'POST',

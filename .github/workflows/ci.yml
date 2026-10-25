@@ -1,0 +1,44 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      # 插件没有依赖也没有构建步骤，直接跑自检
+      - name: Syntax check
+        run: |
+          for f in lib/*.js lib/*.mjs client/*.js scripts/*.mjs; do
+            node --check "$f"
+          done
+      - name: Smoke tests
+        run: |
+          node scripts/smoke.mjs
+          node scripts/smoke-profile.mjs
+          node scripts/smoke-analyze.mjs
+          node scripts/smoke-sessions.mjs
+          node scripts/smoke-client.mjs
+      - name: Package integrity
+        run: |
+          node -e "
+          const fs=require('fs'), path=require('path');
+          const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
+          const paths=[pkg.main,pkg.icon,pkg.dsh.bundle.patch,pkg.exports['.'],pkg.exports['./client']];
+          let bad=0;
+          for (const p of paths) { if(!fs.existsSync(p)){ console.error('missing: '+p); bad++; } }
+          if (pkg.name !== 'dsh-conversation-digest') { console.error('unexpected name'); bad++; }
+          if (bad) process.exit(1);
+          console.log('package integrity ok');
+          "
