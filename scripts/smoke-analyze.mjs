@@ -87,6 +87,41 @@ ok('复盘输出：issues 不是数组时报错而不是崩', () => {
   assert.deepEqual(r.issues, [])
 })
 
+ok('复盘输出：裸数组形态也能接住', () => {
+  const { issues, error } = parseReviewOutput('[{"title":"数组形态的问题"}]')
+  assert.equal(error, null)
+  assert.equal(issues.length, 1)
+})
+
+ok('复盘输出：{issues:{id:…}} 对象形态也能接住', () => {
+  const text = JSON.stringify({ issues: { a: { title: '对象形态的问题' } } })
+  const { issues, error } = parseReviewOutput(text)
+  assert.equal(error, null)
+  assert.equal(issues.length, 1)
+  assert.equal(issues[0].title, '对象形态的问题')
+})
+
+ok('复盘输出：尾逗号容错', () => {
+  const { issues } = parseReviewOutput('{"issues":[{"title":"带尾逗号"},]}')
+  assert.equal(issues.length, 1)
+})
+
+ok('复盘提示词：8 个大会话也不会超预算', () => {
+  const sessions = Array.from({ length: 8 }, (_, index) => ({
+    session: { sessionId: 's' + index },
+    signals: {
+      title: 'T' + index,
+      turns: 20,
+      userMessages: Array.from({ length: 60 }, (_, i) => ({ seq: i, text: '很长的一句话'.repeat(30) })),
+      toolFailures: Array.from({ length: 30 }, (_, i) => ({ seq: i, tool: 'pwsh', code: 'E' + i, reason: 'x'.repeat(300) })),
+    },
+  }))
+  const prompt = buildReviewPrompt(sessions)
+  assert.ok(prompt.length <= 12000 * 1.4 + 50, '提示词超预算：' + prompt.length)
+  assert.match(prompt, /s0/)
+  assert.match(prompt, /s7/)
+})
+
 ok('复盘输出：最多接受 12 条', () => {
   const many = Array.from({ length: 30 }, (_, i) => ({ title: `问题标题 ${i}` }))
   const { issues } = parseReviewOutput(JSON.stringify({ issues: many }))

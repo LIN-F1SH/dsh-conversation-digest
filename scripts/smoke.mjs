@@ -119,6 +119,18 @@ ok('GET /pwb/profile 返回完整结构（空档案也能用）', async () => {
   assert.equal(json.counts.issues, 0)
 })
 
+ok('GET /pwb/health 如实报告环境（缺模型时 ready=false）', async () => {
+  const { res, json } = await invoke(ctx, '/pwb/health')
+  assert.equal(res.statusCode, 200)
+  assert.equal(json.ok, true)
+  assert.equal(json.llm, false, '测试上下文里没有 llm')
+  assert.equal(json.ready, false, '没有 llm 时不该声称可用')
+  // 此刻还没有写过档案，exists 应为 false —— 只要求它如实报告，不要求为 true
+  assert.equal(typeof json.profile.exists, 'boolean')
+  assert.equal(json.profile.issues, 0)
+  assert.equal(typeof json.sessions.total, 'number')
+})
+
 ok('写接口拒绝非本机来源（403）', async () => {
   const { res, json } = await invoke(ctx, '/pwb/profile', {
     method: 'POST',

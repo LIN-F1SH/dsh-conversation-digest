@@ -73,6 +73,7 @@ dsh plugin --profile web add github:LIN-F1SH/dsh-conversation-digest
 | 方法 | 路径 | 作用 |
 |---|---|---|
 | GET | `/pwb/ping` | 自检 |
+| GET | `/pwb/health` | 环境体检：llm / 默认模型 / 档案 / 可复盘会话，`ready` 一句话回答"现在能不能跑复盘" |
 | GET | `/pwb/profile` | 读档案（改进项 / 资产 / 复盘记录 / 设置） |
 | POST | `/pwb/profile` | 改设置、改改进项状态、删条目（用 `action` 区分） |
 | GET | `/pwb/sessions` | 列出可复盘的时间窗口 |
@@ -102,7 +103,7 @@ dsh-conversation-digest/
 ## 开发
 
 ```powershell
-npm run smoke          # 47 项：宿主 13 + 档案 17 + 分析 17
+npm run smoke          # 52 项：宿主 14 + 档案 17 + 分析 21
 ```
 
 ### 三个踩过的坑（写这类插件的人会再踩一遍）
