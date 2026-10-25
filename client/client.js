@@ -53,6 +53,7 @@ window.__ModuleLoader__.load({
       reviewing: '复盘中…（会调用模型，几十秒）',
       reviewDone: '复盘完成：新增 {n} 条，合并 {m} 条',
       reviewScope: '共分析 {s} 个会话 / {u} 条你的提问 / {f} 次工具失败',
+      forceReview: '强制重跑（会重新分析已看过的会话，更费 token）',
       dismiss: '忽略',
       restore: '恢复',
       active: '生效中',
@@ -113,6 +114,7 @@ window.__ModuleLoader__.load({
       reviewing: 'Reviewing… (calls the model, may take a while)',
       reviewDone: 'Review done: {n} new, {m} merged',
       reviewScope: '{s} sessions / {u} of your prompts / {f} tool failures',
+      forceReview: 'Force re-run (re-analyzes old sessions, costs more tokens)',
       dismiss: 'Dismiss',
       restore: 'Restore',
       active: 'Active',
@@ -486,6 +488,7 @@ window.__ModuleLoader__.load({
       const [reviewId, setReviewId] = useState(null)
       const [reviewState, setReviewState] = useState(null)
       const [tab, setTab] = useState('issues')
+      const [needForce, setNeedForce] = useState(false)
 
       const tr = (key, vars) => {
         const text = t ? t(key) : null
@@ -533,14 +536,17 @@ window.__ModuleLoader__.load({
         }
       }, [reviewId, load])
 
-      const startReview = useCallback(async () => {
+      const startReview = useCallback(async (force) => {
         setError(null)
         setReviewState(null)
+        setNeedForce(false)
         try {
-          const payload = await post('/review', {})
+          const payload = await post('/review', force ? { force: true } : {})
           setReviewId(payload.reviewId)
         } catch (err) {
           setError(err.message)
+          // 增量复盘会在"没有新会话"时拒绝 —— 告知用户可以强制重跑
+          if (String(err.message || '').includes('force')) setNeedForce(true)
         }
       }, [])
 
@@ -598,7 +604,7 @@ window.__ModuleLoader__.load({
             type: 'button',
             className: 'pwb-btn pwb-btn-primary',
             disabled: busy,
-            onClick: startReview,
+            onClick: () => startReview(false),
           }, busy ? tr('reviewing') : tr('startReview')),
         ),
 
@@ -613,6 +619,12 @@ window.__ModuleLoader__.load({
           })),
         ) : null,
         error ? h('div', { className: 'pwb-err' }, error) : null,
+        needForce ? h('button', {
+          type: 'button',
+          className: 'pwb-btn',
+          style: { marginTop: 6 },
+          onClick: () => startReview(true),
+        }, tr('forceReview')) : null,
 
         h('div', { style: { display: 'flex', gap: 8, marginTop: 14, marginBottom: 10 } },
           h('button', {
