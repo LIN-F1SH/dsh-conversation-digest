@@ -1,0 +1,21 @@
+# 提交到 awesome-dsh-plugin 的条目（插件市场收录用）
+#
+# 用法：把这个文件的内容作为新文件
+#   data/plugins/LIN-F1SH__dsh-conversation-digest.yml
+# 提到 https://github.com/awesome-dsh-plugin/awesome-dsh-plugin 的 PR 里。
+# 那边的 README 是自动生成的，不要手改 README，只加这一个文件。
+#
+# 收录条件（提交时自动校验）：
+#   1. package.json 里必须有 dsh.bundle      —— 本仓库有（dsh.bundle.patch）
+#   2. 仓库必须带 dsh-plugin topic           —— 已有
+#   3. 仓库创建满 1 天                       —— 本仓库创建于 2026-10-25T03:44Z
+#
+# 字段含义参考同目录下现有条目：url / name / category / description(en,zh) / icon
+
+url: https://github.com/LIN-F1SH/dsh-conversation-digest
+name: LIN-F1SH/dsh-conversation-digest
+category: tools
+description:
+  en: 'Reads your past DSH conversations and points out problems in how you asked (vague instructions that caused rework, constraints you kept repeating, missing preconditions that broke tool calls), each with a paste-ready rewrite. Adds a one-click rewrite next to the composer that returns three variants — concise, standard, strict — built from those findings. Adopted rewrites are archived as task-tagged templates and offered again the next time you type something similar.'
+  zh: '读你的历史会话，指出提问上的问题（指令模糊导致返工、反复交代的约束、漏说导致工具调用失败的前置条件），每条给出可直接粘贴的改写草稿；输入框右侧一键出简洁 / 标准 / 严谨三档；采纳的改写归档成按任务类型打标签的模板，下次输入相似内容时推荐。'
+icon: https://raw.githubusercontent.com/LIN-F1SH/dsh-conversation-digest/main/icon.png
