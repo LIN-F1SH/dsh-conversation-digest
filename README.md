@@ -48,7 +48,7 @@ DeepSeek Harness（DSH）插件。它把三件事串成**一个闭环**，而不
 dsh plugin --profile web add github:LIN-F1SH/dsh-conversation-digest
 
 # 钉住某个版本（推荐用于生产）
-dsh plugin --profile web add github:LIN-F1SH/dsh-conversation-digest#v0.1.0
+dsh plugin --profile web add github:LIN-F1SH/dsh-conversation-digest#v0.1.1
 ```
 
 > ⚠️ **宿主代码改动后必须重启应用**。插件以 `link:` 安装时，改 `lib/*` 不会热重载（ESM 模块缓存）；禁用再启用也只会重跑 `apply()`，不会重载代码。客户端 `client/client.js` 的改动刷新页面（Ctrl+F5）即可。
@@ -130,7 +130,7 @@ dsh-conversation-digest/
 ## 开发
 
 ```powershell
-npm run smoke          # 97 项：宿主 15 + 档案 27 + 分析 34 + 会话 9 + 客户端 12
+npm run smoke          # 98 项：宿主 15 + 档案 28 + 分析 34 + 会话 9 + 客户端 12
 ```
 
 客户端半区不需要浏览器也能验：`scripts/smoke-client.mjs` 桩掉 `window.__ModuleLoader__`、`document` 和 `require('react')`，直接跑 factory 与 `apply()`，断言 id 与包名一致、返回 cordis 插件、三个插槽名真实存在、组件可渲染、清理函数可用，并覆盖两种降级：语言包注册抛错时插槽仍注册、缺少 `useInput`/`inputActions` 时组件不抛。

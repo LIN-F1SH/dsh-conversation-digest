@@ -255,6 +255,19 @@ ok('coverage 能存进档案并读回', () => {
   assert.equal(profile.coverage['session-a'], 123)
 })
 
+ok('复盘记录里的 tokens 能存进档案并读回（之前会被 normalize 丢掉）', () => {
+  const p = emptyProfile()
+  recordReview(p, {
+    id: 'r-tokens',
+    tokens: { inputTokens: 4001, outputTokens: 933, cacheReadTokens: 128 },
+  })
+  saveProfile(p)
+  const { profile } = loadProfile()
+  const saved = profile.reviews.find((x) => x.id === 'r-tokens')
+  assert.ok(saved, '复盘记录应当存在')
+  assert.deepEqual(saved.tokens, { inputTokens: 4001, outputTokens: 933, cacheReadTokens: 128 })
+})
+
 ok('复盘记录写入并裁剪', () => {
   const p = emptyProfile()
   for (let i = 0; i < 60; i++) {

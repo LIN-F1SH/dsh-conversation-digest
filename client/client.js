@@ -172,21 +172,38 @@ window.__ModuleLoader__.load({
 `
 
     // —— HTTP ——
-    async function call(path, options) {
-      const response = await fetch(API + path, Object.assign({ headers: { 'content-type': 'application/json' } }, options))
-      let payload = null
+    // timeoutMs：宿主卡住（模型不返回）时不要无限转圈，到点主动放弃并给出提示
+    async function call(path, options, timeoutMs = 60000) {
+      const controller = new AbortController()
+      const timer = setTimeout(() => {
+        try { controller.abort() } catch (err) {}
+      }, timeoutMs)
       try {
-        payload = await response.json()
+        const response = await fetch(API + path, Object.assign(
+          { headers: { 'content-type': 'application/json' }, signal: controller.signal },
+          options,
+        ))
+        let payload = null
+        try {
+          payload = await response.json()
+        } catch (err) {
+          throw new Error(`服务返回了非 JSON（HTTP ${response.status}）`)
+        }
+        if (!response.ok || (payload && payload.ok === false)) {
+          throw new Error((payload && payload.error) || `HTTP ${response.status}`)
+        }
+        return payload
       } catch (err) {
-        throw new Error(`服务返回了非 JSON（HTTP ${response.status}）`)
+        if (err && err.name === 'AbortError') {
+          throw new Error(`请求超时（${Math.round(timeoutMs / 1000)} 秒），宿主可能正忙或模型未返回`)
+        }
+        throw err
+      } finally {
+        clearTimeout(timer)
       }
-      if (!response.ok || (payload && payload.ok === false)) {
-        throw new Error((payload && payload.error) || `HTTP ${response.status}`)
-      }
-      return payload
     }
 
-    const post = (path, body) => call(path, { method: 'POST', body: JSON.stringify(body || {}) })
+    const post = (path, body, timeoutMs) => call(path, { method: 'POST', body: JSON.stringify(body || {}) }, timeoutMs)
 
     // —— ① 发送前优化按钮 ——
 
@@ -208,7 +225,7 @@ window.__ModuleLoader__.load({
         setError(null)
         setCopied(-1)
         try {
-          const payload = await post('/optimize', { draft: text })
+          const payload = await post('/optimize', { draft: text }, 180000)
           setResult(payload)
           setOpen(true)
         } catch (err) {
@@ -541,7 +558,7 @@ window.__ModuleLoader__.load({
         setReviewState(null)
         setNeedForce(false)
         try {
-          const payload = await post('/review', force ? { force: true } : {})
+          const payload = await post('/review', force ? { force: true } : {}, 30000)
           setReviewId(payload.reviewId)
         } catch (err) {
           setError(err.message)
