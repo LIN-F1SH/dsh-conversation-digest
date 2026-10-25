@@ -2,6 +2,8 @@
 
 [![ci](https://github.com/LIN-F1SH/dsh-conversation-digest/actions/workflows/ci.yml/badge.svg)](https://github.com/LIN-F1SH/dsh-conversation-digest/actions/workflows/ci.yml)
 
+> 把「每次都要自己想起来」变成「存在档案里、下次自动补上」。
+
 DeepSeek Harness（DSH）插件。它把三件事串成**一个闭环**，而不是三个独立功能：
 
 ```text
