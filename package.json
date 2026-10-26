@@ -61,6 +61,7 @@
     "docs",
     "icon.png",
     "cordis.patch.yml",
+    "screenshots.json",
     "README.md",
     "CHANGELOG.md",
     "LICENSE"
