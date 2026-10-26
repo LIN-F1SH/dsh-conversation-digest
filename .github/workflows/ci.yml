@@ -38,7 +38,7 @@ jobs:
           const paths=[pkg.main,pkg.icon,pkg.dsh.bundle.patch,pkg.exports['.'],pkg.exports['./client']];
           let bad=0;
           for (const p of paths) { if(!fs.existsSync(p)){ console.error('missing: '+p); bad++; } }
-          if (pkg.name !== 'dsh-conversation-digest') { console.error('unexpected name'); bad++; }
+          if (pkg.name !== 'dsh-prompt-lint') { console.error('unexpected name'); bad++; }
           if (bad) process.exit(1);
           console.log('package integrity ok');
           "

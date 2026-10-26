@@ -1,6 +1,6 @@
-# 提示词体检 · dsh-conversation-digest
+# 提示词体检 · dsh-prompt-lint
 
-[![ci](https://github.com/LIN-F1SH/dsh-conversation-digest/actions/workflows/ci.yml/badge.svg)](https://github.com/LIN-F1SH/dsh-conversation-digest/actions/workflows/ci.yml)
+[![ci](https://github.com/LIN-F1SH/dsh-prompt-lint/actions/workflows/ci.yml/badge.svg)](https://github.com/LIN-F1SH/dsh-prompt-lint/actions/workflows/ci.yml)
 
 ## 预览
 
@@ -44,7 +44,7 @@
 
 桌面端读的是 `desktop` profile，`dsh plugin` 命令行按设计拒绝碰它。让宿主自己装：
 
-> 请使用内置的 `plugin_manager` 安装 `github:LIN-F1SH/dsh-conversation-digest`。
+> 请使用内置的 `plugin_manager` 安装 `github:LIN-F1SH/dsh-prompt-lint`。
 
 或本地开发：
 
@@ -54,10 +54,10 @@
 
 ```powershell
 # 跟随 main（会拿到最新提交）
-dsh plugin --profile web add github:LIN-F1SH/dsh-conversation-digest
+dsh plugin --profile web add github:LIN-F1SH/dsh-prompt-lint
 
 # 钉住某个版本（推荐用于生产）
-dsh plugin --profile web add github:LIN-F1SH/dsh-conversation-digest#v0.1.1
+dsh plugin --profile web add github:LIN-F1SH/dsh-prompt-lint#v0.1.1
 ```
 
 > ⚠️ **宿主代码改动后必须重启应用**。插件以 `link:` 安装时，改 `lib/*` 不会热重载（ESM 模块缓存）；禁用再启用也只会重跑 `apply()`，不会重载代码。客户端 `client/client.js` 的改动刷新页面（Ctrl+F5）即可。
@@ -122,7 +122,7 @@ dsh plugin --profile web add github:LIN-F1SH/dsh-conversation-digest#v0.1.1
 ## 目录结构
 
 ```text
-dsh-conversation-digest/
+dsh-prompt-lint/
 ├── package.json          # dsh.bundle.patch + dsh.client（platform: web）
 ├── cordis.patch.yml      # 挂载声明
 ├── lib/

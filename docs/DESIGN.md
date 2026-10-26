@@ -1,4 +1,4 @@
-# 个人提示词效能工作台 · 设计文档
+# 提示词体检 · 设计文档
 
 > 状态：**已实现并通过真机验证**（v0.1.0）。本文档描述的是**为什么这么做**，README 描述的是**怎么用**。
 > 设计期间的两个「调研中」风险已闭环：客户端插槽能读写草稿（`useInput` / `inputActions`，无需 DOM hack）；手写 `client.js` 被宿主接受（`__ModuleLoader__.load` 工厂，零构建）。
@@ -166,7 +166,7 @@ interface WorkbenchSettings {
 
 ### Client 半区（`client/client.js`）
 
-手写、**不打包**：`window.__ModuleLoader__.load({ id: 'dsh-conversation-digest', factory: (require) => { ... return { name, inject: ['slots'], apply } } })`，`require('react')` 拿 React，`ctx.slots.inject(...)` 注册。
+手写、**不打包**：`window.__ModuleLoader__.load({ id: 'dsh-prompt-lint', factory: (require) => { ... return { name, inject: ['slots'], apply } } })`，`require('react')` 拿 React，`ctx.slots.inject(...)` 注册。
 
 挂载点：
 

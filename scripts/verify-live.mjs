@@ -32,7 +32,7 @@ function line(char = '─') {
 }
 
 console.log(line('═'))
-console.log('DSH 个人提示词效能工作台 · 真机验证')
+console.log('DSH 提示词体检 · 真机验证')
 console.log(BASE)
 console.log(line('═'))
 

@@ -73,7 +73,7 @@ const plugin = captured.factory((name) => {
 ok('factory 返回的是 cordis 插件对象', () => {
   assert.equal(typeof plugin, 'object')
   assert.equal(typeof plugin.apply, 'function')
-  assert.equal(plugin.name, 'dsh-conversation-digest')
+  assert.equal(plugin.name, 'dsh-prompt-lint')
   assert.deepEqual(plugin.inject, ['slots', 'locale'])
 })
 

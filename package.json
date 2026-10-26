@@ -1,6 +1,6 @@
 {
-  "name": "dsh-conversation-digest",
-  "version": "0.1.4",
+  "name": "dsh-prompt-lint",
+  "version": "0.2.0",
   "description": "提示词体检：读你的历史会话找出反复踩的提问坑（缺路径、没定格式、漏前置条件），每条给可直接粘贴的改写；输入框旁一键出更短的带约束版本。不承诺提升准确度。",
   "type": "module",
   "main": "lib/index.js",
@@ -36,12 +36,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/LIN-F1SH/dsh-conversation-digest.git"
+    "url": "git+https://github.com/LIN-F1SH/dsh-prompt-lint.git"
   },
   "bugs": {
-    "url": "https://github.com/LIN-F1SH/dsh-conversation-digest/issues"
+    "url": "https://github.com/LIN-F1SH/dsh-prompt-lint/issues"
   },
-  "homepage": "https://github.com/LIN-F1SH/dsh-conversation-digest#readme",
+  "homepage": "https://github.com/LIN-F1SH/dsh-prompt-lint#readme",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"

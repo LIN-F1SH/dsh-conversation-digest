@@ -91,7 +91,7 @@ const ctx = makeCtx()
 plugin.apply(ctx)
 
 ok('插件名与包名一致', () => {
-  assert.equal(plugin.name, 'dsh-conversation-digest')
+  assert.equal(plugin.name, 'dsh-prompt-lint')
 })
 
 ok('注册了 /pwb/* 全部路由', () => {
@@ -106,7 +106,7 @@ ok('ping 返回 200 + 合法 JSON', async () => {
   assert.equal(res.statusCode, 200)
   assert.equal(res.headers['content-type'], 'application/json; charset=utf-8')
   assert.equal(json.ok, true)
-  assert.equal(json.plugin, 'dsh-conversation-digest')
+  assert.equal(json.plugin, 'dsh-prompt-lint')
 })
 
 ok('GET /pwb/profile 返回完整结构（空档案也能用）', async () => {

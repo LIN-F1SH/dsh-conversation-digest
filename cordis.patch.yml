@@ -1,5 +1,5 @@
 # ============================================================================
-# dsh-conversation-digest —— DSH bundle patch
+# dsh-prompt-lint —— DSH bundle patch
 # ============================================================================
 # 这是插件的「挂载声明」。宿主启动时按 bundle 层栈叠加各插件的 patch，
 # 这份文件把本插件插入当前 profile 的配置树。
@@ -11,5 +11,5 @@
 # ============================================================================
 
 - insert:
-    - id: dsh-conversation-digest
-      name: dsh-conversation-digest
+    - id: dsh-prompt-lint
+      name: dsh-prompt-lint

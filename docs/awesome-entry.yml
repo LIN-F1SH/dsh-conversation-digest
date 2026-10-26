@@ -1,7 +1,7 @@
-url: https://github.com/LIN-F1SH/dsh-conversation-digest
-name: LIN-F1SH/dsh-conversation-digest
+url: https://github.com/LIN-F1SH/dsh-prompt-lint
+name: LIN-F1SH/dsh-prompt-lint
 category: tools
 description:
   en: 'Reads your past DSH conversations and points out problems in how you asked — vague instructions that caused rework, constraints you kept repeating, missing preconditions that broke tool calls — each with a paste-ready rewrite. Adds a one-click rewrite next to the composer that returns three variants (concise, standard, strict) built from those findings, and archives adopted rewrites as task-tagged templates that are offered again the next time you type something similar.'
   zh: '读你的历史会话，指出提问上的问题（指令模糊导致返工、反复交代的约束、漏说导致工具调用失败的前置条件），每条给出可直接粘贴的改写草稿；输入框右侧一键出简洁 / 标准 / 严谨三档；采纳的改写归档成按任务类型打标签的模板，下次输入相似内容时推荐。'
-icon: https://raw.githubusercontent.com/LIN-F1SH/dsh-conversation-digest/main/icon.png
+icon: https://raw.githubusercontent.com/LIN-F1SH/dsh-prompt-lint/main/icon.png

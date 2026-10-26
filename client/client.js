@@ -1,5 +1,5 @@
 // ============================================================================
-// 个人提示词效能工作台 · 客户端半区
+// 提示词体检 · 客户端半区
 // ============================================================================
 // 手写、零构建。格式照官方模板：
 //   window.__ModuleLoader__.load({ id: <包名>, factory(require) { ... return 插件 } })
@@ -15,7 +15,7 @@
 // ============================================================================
 
 window.__ModuleLoader__.load({
-  id: 'dsh-conversation-digest',
+  id: 'dsh-prompt-lint',
 
   factory(require) {
     const React = require('react')
@@ -764,7 +764,7 @@ window.__ModuleLoader__.load({
     // —— 插件本体 ——
 
     return {
-      name: 'dsh-conversation-digest',
+      name: 'dsh-prompt-lint',
       inject: ['slots', 'locale'],
 
       apply(ctx) {
@@ -775,7 +775,7 @@ window.__ModuleLoader__.load({
             return fn()
           } catch (err) {
             try {
-              console.warn('[dsh-conversation-digest] ' + label + ' 注册失败：' + ((err && err.message) || err))
+              console.warn('[dsh-prompt-lint] ' + label + ' 注册失败：' + ((err && err.message) || err))
             } catch (inner) {}
             return undefined
           }
@@ -785,7 +785,7 @@ window.__ModuleLoader__.load({
           ctx.effect(() => {
             if (typeof document === 'undefined' || !document.head) return () => {}
             const style = document.createElement('style')
-            style.setAttribute('data-plugin', 'dsh-conversation-digest')
+            style.setAttribute('data-plugin', 'dsh-prompt-lint')
             style.textContent = CSS
             document.head.appendChild(style)
             return () => style.remove()
