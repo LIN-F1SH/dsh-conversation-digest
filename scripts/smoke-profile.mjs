@@ -84,11 +84,18 @@ ok('严重度取更高的一档', () => {
   assert.equal(p.issues[0].severity, 'high')
 })
 
-ok('更长的 rewrite 覆盖更短的', () => {
+ok('新一次复盘的 rewrite 覆盖旧的（不再"长的赢"）', () => {
   const p = emptyProfile()
-  mergeIssues(p, [{ kind: 'ambiguous', title: '指令模糊', rewrite: '短' }])
-  mergeIssues(p, [{ kind: 'ambiguous', title: '指令模糊', rewrite: '更详细的一版改写草稿' }])
-  assert.match(p.issues[0].rewrite, /更详细/)
+  mergeIssues(p, [{ kind: 'ambiguous', title: '指令模糊', rewrite: '很长很长的一版旧改写草稿，里面塞了大量流程仪式话术' }])
+  mergeIssues(p, [{ kind: 'ambiguous', title: '指令模糊', rewrite: '输出为表格' }])
+  assert.equal(p.issues[0].rewrite, '输出为表格', '规则收紧后，短的新改写也必须能覆盖旧的长版本')
+})
+
+ok('新改写为空时保留旧改写，不把字段抹掉', () => {
+  const p = emptyProfile()
+  mergeIssues(p, [{ kind: 'ambiguous', title: '指令模糊', rewrite: '输出为表格' }])
+  mergeIssues(p, [{ kind: 'ambiguous', title: '指令模糊' }])
+  assert.equal(p.issues[0].rewrite, '输出为表格')
 })
 
 ok('用户 dismiss 掉的问题不会被再次复盘覆盖回 active', () => {
@@ -228,7 +235,7 @@ ok('设置校验：数值越界被夹到合理区间', () => {
 ok('设置校验：缺字段时保留默认值', () => {
   const s = normalizeSettings({})
   assert.equal(s.enabled, true)
-  assert.equal(s.optimizeDefault, '标准')
+  assert.equal(s.optimizeDefault, '简洁')
 })
 
 ok('增量复盘：已看过且没变的会话被跳过', () => {

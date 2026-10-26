@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import {
   extractJson, parseReviewOutput, parseOptimizeOutput, parseTaggingOutput,
   buildOptimizePrompt, buildReviewPrompt, digestSession, arrangeOptions, buildOptimizeSystem,
-  callModel,
+  callModel, REVIEW_SYSTEM,
 } from '../lib/analyze.mjs'
 
 let passed = 0
@@ -245,6 +245,24 @@ ok('callModel 遇到 max-tokens 截断时明确报错', async () => {
     () => callModel(fakeLlm, { provider: 'p', model: 'm', system: 's', prompt: 'x' }),
     /截断/,
   )
+})
+
+ok('优化提示词明确禁止流程仪式（防止又长又空的约束）', () => {
+  const system = buildOptimizeSystem({ variants: ['简洁'], defaultLabel: '简洁' })
+  assert.match(system, /禁止补/)
+  assert.match(system, /先复述我的要求/)
+  assert.match(system, /最多补 3 条/)
+  assert.match(system, /只补.*会改变输出结果/)
+})
+
+ok('简洁档硬上限压到 140 字（原来 200 太长）', () => {
+  const out = parseOptimizeOutput(JSON.stringify({ options: [{ label: '简洁', text: 'X'.repeat(400) }] }))
+  assert.ok(out.options[0].text.length <= 141, '实际 ' + out.options[0].text.length)
+})
+
+ok('复盘改写规则里也禁掉了流程话术', () => {
+  assert.match(REVIEW_SYSTEM, /禁止写流程仪式/)
+  assert.match(REVIEW_SYSTEM, /不超过 80 字/)
 })
 
 ok('打标签输出：缺 category 时返回 null', () => {
