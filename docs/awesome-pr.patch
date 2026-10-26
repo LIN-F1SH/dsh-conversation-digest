@@ -1,0 +1,26 @@
+﻿From 60213130e667c90ed97d41b61c830439f0e3b3bb Mon Sep 17 00:00:00 2001
+From: LIN-F1SH <320110619+LIN-F1SH@users.noreply.github.com>
+Date: Mon, 26 Oct 2026 17:02:00 +0800
+Subject: [PATCH] Add LIN-F1SH/dsh-conversation-digest
+
+---
+ data/plugins/LIN-F1SH__dsh-conversation-digest.yml | 7 +++++++
+ 1 file changed, 7 insertions(+)
+ create mode 100644 data/plugins/LIN-F1SH__dsh-conversation-digest.yml
+
+diff --git a/data/plugins/LIN-F1SH__dsh-conversation-digest.yml b/data/plugins/LIN-F1SH__dsh-conversation-digest.yml
+new file mode 100644
+index 0000000..32fd1e6
+--- /dev/null
++++ b/data/plugins/LIN-F1SH__dsh-conversation-digest.yml
+@@ -0,0 +1,7 @@
++url: https://github.com/LIN-F1SH/dsh-conversation-digest
++name: LIN-F1SH/dsh-conversation-digest
++category: tools
++description:
++  en: 'Reads your past DSH conversations and points out problems in how you asked — vague instructions that caused rework, constraints you kept repeating, missing preconditions that broke tool calls — each with a paste-ready rewrite. Adds a one-click rewrite next to the composer that returns three variants (concise, standard, strict) built from those findings, and archives adopted rewrites as task-tagged templates that are offered again the next time you type something similar.'
++  zh: '读你的历史会话，指出提问上的问题（指令模糊导致返工、反复交代的约束、漏说导致工具调用失败的前置条件），每条给出可直接粘贴的改写草稿；输入框右侧一键出简洁 / 标准 / 严谨三档；采纳的改写归档成按任务类型打标签的模板，下次输入相似内容时推荐。'
++icon: https://raw.githubusercontent.com/LIN-F1SH/dsh-conversation-digest/main/icon.png
+-- 
+2.53.0.windows.2
+
