@@ -1,6 +1,6 @@
 {
   "name": "dsh-conversation-digest",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "读你的历史对话指出提问上的问题（并给可直接粘贴的改写草稿），输入框一键出简洁/标准/严谨三档，采纳的问法自动归档成模板并按任务类型推荐。",
   "type": "module",
   "main": "lib/index.js",

@@ -155,7 +155,7 @@ window.__ModuleLoader__.load({
 .pwb-btn:hover{background:var(--dsw-alias-bg-layer-2);border-color:var(--dsw-alias-border-l2)}
 .pwb-btn:disabled{opacity:.5;cursor:not-allowed}
 .pwb-btn-primary{background:var(--dsw-alias-brand-primary);border-color:var(--dsw-alias-brand-primary);color:#fff}
-.pwb-panel{position:absolute;bottom:calc(100% + 8px);right:0;width:min(560px,86vw);max-height:60vh;overflow:auto;background:var(--dsw-alias-bg-overlay);border:1px solid var(--dsw-alias-border-l2);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.18);padding:14px;z-index:40;font-size:13px;color:var(--dsw-alias-label-primary)}
+.pwb-panel{position:fixed;overflow:auto;background:var(--dsw-alias-bg-overlay);border:1px solid var(--dsw-alias-border-l2);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.18);padding:14px;z-index:2147483000;font-size:13px;color:var(--dsw-alias-label-primary);box-sizing:border-box}
 .pwb-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
 .pwb-title{font-weight:600;font-size:13px}
 .pwb-muted{color:var(--dsw-alias-label-secondary);font-size:12px}
@@ -212,6 +212,8 @@ window.__ModuleLoader__.load({
       const readDraft = typeof useInput === 'function' ? useInput : null
       const draft = readDraft ? readDraft((state) => state.draft) : ''
       const [open, setOpen] = useState(false)
+      // 面板位置：用 fixed + JS 计算，避免被输入框容器的 overflow 裁掉或被侧栏压住
+      const [panelPos, setPanelPos] = useState(null)
       const [busy, setBusy] = useState(false)
       const [result, setResult] = useState(null)
       const [error, setError] = useState(null)
@@ -274,6 +276,60 @@ window.__ModuleLoader__.load({
         return () => window.removeEventListener('keydown', onKey)
       }, [open])
 
+      // 面板定位：以按钮为锚点算出一个视口内的坐标，宽度夹到视口内，
+      // 上方放不下就翻到下方。用 fixed 是为了逃出输入框容器的 overflow 裁剪。
+      useEffect(() => {
+        if (!open) {
+          setPanelPos(null)
+          return undefined
+        }
+        const measure = () => {
+          const el = wrapRef.current
+          if (!el) return
+          const rect = el.getBoundingClientRect()
+          const vw = window.innerWidth || 1280
+          const vh = window.innerHeight || 800
+          const margin = 12
+          const width = Math.min(560, Math.max(280, vw - margin * 2))
+          // 右对齐到按钮，再夹进视口
+          const left = Math.min(Math.max(margin, rect.right - width), vw - width - margin)
+          const spaceAbove = rect.top - margin
+          const spaceBelow = vh - rect.bottom - margin
+          const openUp = spaceAbove >= 240 || spaceAbove >= spaceBelow
+          const maxHeight = Math.max(180, Math.min(560, openUp ? spaceAbove : spaceBelow))
+          setPanelPos(openUp
+            ? { left, width, maxHeight, bottom: vh - rect.top + 8 }
+            : { left, width, maxHeight, top: rect.bottom + 8 })
+        }
+        measure()
+        window.addEventListener('resize', measure)
+        window.addEventListener('scroll', measure, true)
+        return () => {
+          window.removeEventListener('resize', measure)
+          window.removeEventListener('scroll', measure, true)
+        }
+      }, [open])
+
+      // 点面板外面就关掉（面板在 wrapRef 内，点面板不会触发）
+      useEffect(() => {
+        if (!open) return undefined
+        const onDown = (event) => {
+          const el = wrapRef.current
+          if (el && event.target instanceof Node && !el.contains(event.target)) setOpen(false)
+        }
+        document.addEventListener('mousedown', onDown, true)
+        return () => document.removeEventListener('mousedown', onDown, true)
+      }, [open])
+
+      const panelStyle = panelPos
+        ? {
+            left: panelPos.left,
+            width: panelPos.width,
+            maxHeight: panelPos.maxHeight,
+            ...(panelPos.top != null ? { top: panelPos.top } : { bottom: panelPos.bottom }),
+          }
+        : { left: -9999, top: 0, width: 320, visibility: 'hidden' }
+
       const tr = (key, vars) => {
         const dict = t ? t : null
         let text = dict ? dict(key) : null
@@ -290,7 +346,7 @@ window.__ModuleLoader__.load({
           disabled: busy || !String(draft || '').trim(),
           onClick: run,
         }, busy ? tr('optimizing') : '✨ ' + tr('optimize')),
-        open ? h('div', { className: 'pwb-panel' },
+        open ? h('div', { className: 'pwb-panel', style: panelStyle },
           h('div', { className: 'pwb-row' },
             h('span', { className: 'pwb-title' }, tr('optimizeTitle')),
             h('button', { type: 'button', className: 'pwb-btn', onClick: () => setOpen(false) }, tr('close')),
